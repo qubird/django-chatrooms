@@ -1,2 +1,4 @@
 setuptools
 gevent
+django_load>=1.0
+django_polymorphic>=0.2

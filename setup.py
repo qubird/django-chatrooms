@@ -24,8 +24,9 @@ setup(name='chatrooms',
       zip_safe=False,
       install_requires=[
           'setuptools',
-          # -*- Extra requirements: -*-
           'gevent',
+          'django_load>=1.0',
+          'django_polymorphic>=0.2',
       ],
       entry_points="""
       # -*- Entry points: -*-

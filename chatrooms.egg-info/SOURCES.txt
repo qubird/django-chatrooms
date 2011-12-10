@@ -19,6 +19,9 @@ chatrooms.egg-info/top_level.txt
 chatrooms/ajax/__init__.py
 chatrooms/ajax/chat.py
 chatrooms/ajax/views.py
+chatrooms/management/__init__.py
+chatrooms/management/commands/__init__.py
+chatrooms/management/commands/test_gevent.py
 chatrooms/utils/__init__.py
 chatrooms/utils/auth.py
 chatrooms/utils/decorators.py

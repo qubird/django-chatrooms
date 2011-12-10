@@ -5,12 +5,12 @@ from models import Room, Message
 
 
 class RoomAdmin(admin.ModelAdmin):
-    pass
-
-admin.site.register(Room, RoomAdmin)
+    prepopulated_fields = {"slug": ("name",)}
 
 
 class MessageAdmin(admin.ModelAdmin):
     pass
 
+
+admin.site.register(Room, RoomAdmin)
 admin.site.register(Message, MessageAdmin)

@@ -5,13 +5,15 @@ try:
 except ImportError:
     from django.utils.functional import wraps  # Python 2.4 fallback.
 
-from django.utils.decorators import available_attrs
-from django.http import HttpResponseForbidden
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.utils.decorators import available_attrs
 
 
-def user_passes_test_or_403_with_ajax(test_func, message="Access denied"):
+def ajax_user_passes_test_or_403(test_func, message="Access denied"):
     """
     Decorator for views that checks that the user passes the given test,
     raising 403 if user does not pass test.
@@ -35,3 +37,23 @@ def user_passes_test_or_403_with_ajax(test_func, message="Access denied"):
             return resp
         return _wrapped_view
     return decorator
+
+
+def ajax_login_required(view_func):
+    """Handle non-authenticated users differently if it is an AJAX request
+    Borrowed from django-hilbert
+    """
+
+    @wraps(view_func, assigned=available_attrs(view_func))
+    def _wrapped_view(request, *args, **kwargs):
+        if request.is_ajax():
+            if request.user.is_authenticated():
+                return view_func(request, *args, **kwargs)
+            else:
+                response = HttpResponse()
+                response['X-Django-Requires-Auth'] = True
+                response['X-Django-Login-Url'] = settings.LOGIN_URL
+                return response
+        else:
+            return login_required(view_func)(request, *args, **kwargs)
+    return _wrapped_view

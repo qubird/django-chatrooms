@@ -2,9 +2,10 @@ README.txt
 setup.cfg
 setup.py
 chatrooms/__init__.py
+chatrooms/__views.py
 chatrooms/admin.py
 chatrooms/models.py
-chatrooms/test_urls.py
+chatrooms/signals.py
 chatrooms/tests.py
 chatrooms/urls.py
 chatrooms/views.py
@@ -25,3 +26,4 @@ chatrooms/management/commands/test_gevent.py
 chatrooms/utils/__init__.py
 chatrooms/utils/auth.py
 chatrooms/utils/decorators.py
+chatrooms/utils/examples.py

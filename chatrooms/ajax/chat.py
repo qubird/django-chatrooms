@@ -6,27 +6,27 @@ from datetime import datetime, timedelta
 from collections import deque
 
 from django.conf import settings
-from django.contrib.auth.models import User
-from django.db.models import Max
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.http import (HttpResponse,
                         HttpResponseNotFound,
                         HttpResponseBadRequest)
+from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 
 from gevent.event import Event
 
-from ..models import Room, Message
+from ..models import Room
 from ..signals import chat_message_received
 from ..utils.auth import check_user_passes_test
 from ..utils.decorators import ajax_user_passes_test_or_403
 from ..utils.decorators import ajax_login_required
+from ..utils.handlers import MessageHandlerFactory
 
 
 TIME_FORMAT = '%Y-%m-%dT%H:%M:%S:%f'
 
-TIMEOUT = 20
+TIMEOUT = 30
 if settings.DEBUG:
     TIMEOUT = 3
 
@@ -57,20 +57,26 @@ class ChatView(object):
         """
         try:
             room_id = int(request.GET['room_id'])
-            latest_id = int(request.GET['latest_id'])
+            latest_msg_id = int(request.GET['latest_message_id'])
         except:
-            return HttpResponseNotFound('not found', mimetype="text/plain")
-        room = Room.objects.get(id=room_id)
+            return HttpResponseBadRequest(
+            "Parameters missing or bad parameters. "
+            "Expected a GET request with 'room_id' and 'latest_message_id' "
+            "parameters")
+        room = get_object_or_404(Room, id=room_id)
         # wait for new messages
         self.new_message_events[room.id].wait(TIMEOUT)
-        messages = self.messages[room.id]
+
+        handler = MessageHandlerFactory()
+        messages = handler.retrieve_messages(self, room_id)
+
         to_jsonify = [
             {"message_id": msg_id,
              "username": message.user.username,
              "date": message.date.strftime(TIME_FORMAT),
-             "content": message.message}
+             "content": message.content}
             for msg_id, message in messages
-            if msg_id > latest_id
+            if msg_id > latest_msg_id
         ]
         return HttpResponse(json.dumps(to_jsonify),
                             mimetype="application/json")
@@ -87,19 +93,19 @@ class ChatView(object):
             message = request.POST['message']
             date = datetime.now()
         except:
-            return HttpResponseBadRequest()
+            return HttpResponseBadRequest(
+            "Parameters missing or bad parameters"
+            "Expected a POST request with 'room_id' and 'message' parameters")
+        room = get_object_or_404(Room, id=room_id)
         user = request.user
-
         foo, response = chat_message_received.send(
                             sender=self,
-                            room_id=room_id,
+                            room_id=room.id,
                             user=user,
                             message=message,
                             date=date)[0]
-        msg_number = self.counters[room_id].next()
-        self.messages[room_id].append((msg_number, response))
-        return HttpResponse(json.dumps(
-                {'id': msg_number,
+
+        return HttpResponse(json.dumps({
                  'timestamp': date.strftime(TIME_FORMAT), }
         ))
 
@@ -109,14 +115,14 @@ class ChatView(object):
         """Updates user time into connected users dictionary
         """
         try:
-            room_id = request.POST['room_id']
-        except KeyError:
-            return HttpResponseNotFound('not found', mimetype="text/plain")
+            room_id = int(request.POST['room_id'])
+        except:
+            return HttpResponseBadRequest(
+            "Parameters missing or bad parameters"
+            "Expected a POST request with 'room_id'")
 
-        # if request.user.is_authenticated():
-        room_id = long(room_id)
         user = request.user
-        room = Room.objects.get(id=room_id)
+        room = get_object_or_404(Room, id=room_id)
         date = datetime.today()
         self.connected_users[room.id].update({user.username: date})
         self.new_connected_user_event[room_id].set()
@@ -130,12 +136,14 @@ class ChatView(object):
         """
         REFRESH_TIME = 8
         try:
-            room_id = request.GET['room_id']
-        except KeyError:
-            return HttpResponseBadRequest()
-        room_id = int(room_id)
-        room = Room.objects.get(id=room_id)
-        user = User.objects.get(username=request.user.username)
+            room_id = int(request.GET['room_id'])
+        except:
+            return HttpResponseBadRequest(
+            "Parameters missing or bad parameters"
+            "Expected a POST request with 'room_id'")
+
+        room = get_object_or_404(Room, id=room_id)
+        user = request.user
         self.connected_users[room.id].update({
                                 user.username: datetime.today()
                             })
@@ -158,7 +166,7 @@ class ChatView(object):
 
     @method_decorator(ajax_login_required)
     @method_decorator(ajax_user_passes_test_or_403(check_user_passes_test))
-    def get_last_message_id(self, request):
+    def get_latest_message_id(self, request):
         """
         Dumps the id of the latest message sent
         """
@@ -188,16 +196,7 @@ send_message = chat.send_message
 get_messages = chat.get_messages
 get_users_list = chat.get_users_list
 notify_users_list = chat.notify_users_list
-get_last_message_id = chat.get_last_message_id
-
-
-def get_date(request):
-    """dumps the current date """
-    response = {
-        "date": "%s" % datetime.today().strftime(TIME_FORMAT)
-    }
-    return HttpResponse(json.dumps(response),
-                        mimetype="application/json")
+get_latest_message_id = chat.get_latest_message_id
 
 
 @receiver(post_save, sender=Room)

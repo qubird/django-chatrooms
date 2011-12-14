@@ -1,0 +1,15 @@
+<html>
+    <head>
+        <title></title>
+        <script type="text/javascript" charset="utf-8" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.js"></script>
+        <script type="text/javascript" charset="utf-8"
+            src="{{STATIC_URL}}js/jquery_csrf_ajax.js">
+        </script>
+        {% block extra_headers %}            
+        {% endblock %}
+    </head>
+    <body>        
+        {% block content %}  
+        {% endblock %}
+    </body>
+</html>

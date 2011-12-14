@@ -1,25 +1,21 @@
 #encoding=utf8
 
-try:
-    from functools import wraps
-except ImportError:
-    from django.utils.functional import wraps  # Python 2.4 fallback.
-
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils.decorators import available_attrs
+from django.utils.functional import wraps
 
 
 def ajax_user_passes_test_or_403(test_func, message="Access denied"):
     """
-    Decorator for views that checks that the user passes the given test,
+    Decorator for views that checks the user passes the given test,
     raising 403 if user does not pass test.
     If the request is ajax returns a 403 response with a message,
     else renders a 403.html template.
-    The test should be a callable that takes the user object and
+    The test should be a callable which takes the user object and
     returns True if the user passes.
     """
 

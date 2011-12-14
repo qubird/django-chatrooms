@@ -36,18 +36,23 @@ class MessageHandler(object):
         A handler is a method accepting the following arguments:
             signal, sender, room_id, user, message, date
         """
+        # 1
         room = Room.objects.get(id=room_id)
         new_message = Message(user=user,
                               room=room,
                               date=date,
                               content=message)
         new_message.save()
-        msg_number = sender.counters[room_id].next()
-        sender.messages[room_id].append((msg_number, new_message))
 
-        event = sender.new_message_events[room_id]
-        event.set()
-        event.clear()
+        # 2
+        msg_number = sender.get_next_message_id(room_id)
+        messages_queue = sender.get_messages_queue(room_id)
+        messages_queue.append((msg_number, new_message))
+
+        # 3
+        sender.signal_new_message_event(room_id)
+
+        # 4
         return new_message
 
     def retrieve_messages(self,
@@ -61,7 +66,7 @@ class MessageHandler(object):
         In this case, returns the queue of messages stored in
             the ChatView.message dictionary by self.handle_received_message
         """
-        return chatobj.messages[room_id]
+        return chatobj.get_messages_queue(room_id)
 
 
 class MessageHandlerFactory(object):
@@ -79,8 +84,7 @@ class MessageHandlerFactory(object):
                 klass = load_object(settings.CHATROOMS_HANDLERS_CLASS)
             except (ImportError, TypeError):
                 raise ImproperlyConfigured(
-                    "The class set as "
-                    "settings.CHATROOMS_MESSAGES_RETRIEVING_FUNCTION "
+                    "The class set as settings.CHATROOMS_HANDLERS_CLASS "
                     "does not exists"
                 )
 

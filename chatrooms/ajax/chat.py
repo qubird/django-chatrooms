@@ -48,6 +48,16 @@ class ChatView(object):
             self.connected_users[room.id] = {}
             self.new_connected_user_event[room.id] = Event()
 
+    def signal_new_message_event(self, room_id):
+        self.new_message_events[room_id].set()
+        self.new_message_events[room_id].clear()
+
+    def get_messages_queue(self, room_id):
+        return self.messages[room_id]
+
+    def get_next_message_id(self, room_id):
+        return self.counters[room_id].next()
+
     @method_decorator(ajax_login_required)
     @method_decorator(ajax_user_passes_test_or_403(check_user_passes_test))
     def get_messages(self, request):

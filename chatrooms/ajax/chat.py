@@ -9,7 +9,6 @@ from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.http import (HttpResponse,
-                        HttpResponseNotFound,
                         HttpResponseBadRequest)
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
@@ -33,8 +32,20 @@ if settings.DEBUG:
 
 class ChatView(object):
     def __init__(self):
-        # define dictionary of chat room events,
-        # keyed by room_id (for objects in ChatRoom)
+        """
+        Defines dictionary attibutes sorted by room_id
+        For each room:
+        - new_message_events contains gevent.Event objects used by message
+          handlers to pause/restart execution and implement long polling
+        - messages stores the queue of the latest 50 messages
+        - counters contains iterators to pick up message identifiers
+        - connected_users is a dictionary holding the usernames of connected
+          users sorted by the time of their latest request
+        - new_connected_user_event contains gevent.Event objects used
+          by self.notify_users_list and self.get_users_list methods to
+          implement long polling
+
+        """
         self.new_message_events = {}
         self.messages = {}
         self.counters = {}
@@ -49,27 +60,34 @@ class ChatView(object):
             self.new_connected_user_event[room.id] = Event()
 
     def signal_new_message_event(self, room_id):
+        """Signals new_message_event given a room_id """
         self.new_message_events[room_id].set()
         self.new_message_events[room_id].clear()
 
     def wait_for_new_message(self, room_id, timeout=TIMEOUT):
+        """Waits for new_message_event given a room_id """
         self.new_message_events[room_id].wait(timeout)
 
     def get_messages_queue(self, room_id):
+        """Returns the message queue given a room_id """
         return self.messages[room_id]
 
     def get_next_message_id(self, room_id):
+        """Returns the next message identifier given a room_id """
         return self.counters[room_id].next()
 
     def get_connected_users(self, room_id):
+        """Returns the connected users given a room_id"""
         return self.connected_users[room_id]
 
     @method_decorator(ajax_login_required)
     @method_decorator(ajax_user_passes_test_or_403(check_user_passes_test))
     def get_messages(self, request):
-        """
-        Handles ajax requests for messages
+        """Handles ajax requests for messages
         Requests must contain room_id and latest_id
+        Delegates MessageHandler.retrieve_message method to return the list
+        of messages
+
         """
         try:
             room_id = int(request.GET['room_id'])
@@ -79,7 +97,7 @@ class ChatView(object):
             "Parameters missing or bad parameters. "
             "Expected a GET request with 'room_id' and 'latest_message_id' "
             "parameters")
-        room = get_object_or_404(Room, id=room_id)
+        get_object_or_404(Room, id=room_id)
 
         handler = MessageHandlerFactory()
         messages = handler.retrieve_messages(self, room_id)
@@ -98,9 +116,9 @@ class ChatView(object):
     @method_decorator(ajax_login_required)
     @method_decorator(ajax_user_passes_test_or_403(check_user_passes_test))
     def send_message(self, request):
-        """
-        Gets room_id and message as request parameters and sends a
+        """Gets room_id and message as request parameters and sends a
         chat_message_received signal
+
         """
         try:
             room_id = int(request.POST['room_id'])
@@ -110,11 +128,11 @@ class ChatView(object):
             return HttpResponseBadRequest(
             "Parameters missing or bad parameters"
             "Expected a POST request with 'room_id' and 'message' parameters")
-        room = get_object_or_404(Room, id=room_id)
+        get_object_or_404(Room, id=room_id)
         user = request.user
         foo, response = chat_message_received.send(
                             sender=self,
-                            room_id=room.id,
+                            room_id=room_id,
                             user=user,
                             message=message,
                             date=date)[0]
@@ -126,8 +144,7 @@ class ChatView(object):
     @method_decorator(ajax_login_required)
     @method_decorator(ajax_user_passes_test_or_403(check_user_passes_test))
     def notify_users_list(self, request):
-        """Updates user time into connected users dictionary
-        """
+        """Updates user time into connected users dictionary """
         try:
             room_id = int(request.POST['room_id'])
         except:
@@ -136,9 +153,9 @@ class ChatView(object):
             "Expected a POST request with 'room_id'")
 
         user = request.user
-        room = get_object_or_404(Room, id=room_id)
+        get_object_or_404(Room, id=room_id)
         date = datetime.today()
-        self.connected_users[room.id].update({user.username: date})
+        self.connected_users[room_id].update({user.username: date})
         self.new_connected_user_event[room_id].set()
         self.new_connected_user_event[room_id].clear()
         return HttpResponse('Connected')
@@ -146,8 +163,7 @@ class ChatView(object):
     @method_decorator(ajax_login_required)
     @method_decorator(ajax_user_passes_test_or_403(check_user_passes_test))
     def get_users_list(self, request):
-        """Dumps the list of connected users
-        """
+        """Dumps the list of connected users """
         REFRESH_TIME = 8
         try:
             room_id = int(request.GET['room_id'])
@@ -156,9 +172,9 @@ class ChatView(object):
             "Parameters missing or bad parameters"
             "Expected a POST request with 'room_id'")
 
-        room = get_object_or_404(Room, id=room_id)
+        get_object_or_404(Room, id=room_id)
         user = request.user
-        self.connected_users[room.id].update({
+        self.connected_users[room_id].update({
                                 user.username: datetime.today()
                             })
         self.new_connected_user_event[room_id].wait(REFRESH_TIME)
@@ -181,9 +197,7 @@ class ChatView(object):
     @method_decorator(ajax_login_required)
     @method_decorator(ajax_user_passes_test_or_403(check_user_passes_test))
     def get_latest_message_id(self, request):
-        """
-        Dumps the id of the latest message sent
-        """
+        """Dumps the id of the latest message sent """
         try:
             room_id = int(request.GET['room_id'])
         except:
@@ -196,8 +210,9 @@ class ChatView(object):
         return HttpResponse(json.dumps(response), mimetype="application/json")
 
     def _clean_connected_users(self, room_id, seconds=60):
-        """clean connected users dictionary of room_id of users not seen
-            for seconds
+        """Remove from connected users dictionary users not seen
+        for seconds
+
         """
         now = datetime.today()
         for usr, date in self.connected_users[room_id].items():
@@ -215,7 +230,9 @@ get_latest_message_id = chat.get_latest_message_id
 
 @receiver(post_save, sender=Room)
 def create_events_for_new_room(sender, **kwargs):
-    """Creates an entry in Chat dictionary when a new room is created
+    """Creates an entry in Chat dictionary attributes
+    when a new room is created
+
     """
     if kwargs.get('created'):
         instance = kwargs.get('instance')

@@ -9,7 +9,8 @@ from django_load.core import load_object
 def get_test_user_function():
     """
     Returns the function set on settings.CHATROOMS_TEST_USER_FUNCTION
-      if any, else returns False
+    if any, else returns False
+
     """
     if hasattr(settings, 'CHATROOMS_TEST_USER_FUNCTION'):
         try:
@@ -27,7 +28,8 @@ test_user_function = get_test_user_function()
 def check_user_passes_test(request, user):
     """
     Returns the test_user_function if any,
-      else returns True
+    else returns True
+
     """
     if test_user_function:
         return test_user_function(request, user)

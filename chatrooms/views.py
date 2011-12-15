@@ -7,9 +7,7 @@ from .models import Room
 
 
 class RoomsListView(ListView):
-    """
-    View to show the list of rooms available
-    """
+    """View to show the list of rooms available """
     context_object_name = "rooms"
     queryset = Room.objects.all()
     template_name = "chatrooms/rooms_list.html"
@@ -17,9 +15,7 @@ class RoomsListView(ListView):
 
 
 class RoomView(DetailView):
-    """
-    View for the single room
-    """
+    """View for the single room """
     model = Room
     context_object_name = 'room'
     template_name = "chatrooms/room.html"

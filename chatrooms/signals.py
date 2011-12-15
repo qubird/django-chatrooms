@@ -1,4 +1,4 @@
-from utils.handlers import MessageHandlerFactory  # get_message_received_handler
+from utils.handlers import MessageHandlerFactory
 from django.dispatch import Signal
 
 

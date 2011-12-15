@@ -5,19 +5,21 @@ version = '0.1'
 
 setup(name='chatrooms',
       version=version,
-      description="",
+      description="A django app providing reverse-ajax chat rooms",
       long_description=open("README.txt").read() + "\n" +
                        open(os.path.join("docs", "HISTORY.txt")).read(),
-      # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[
         "Programming Language :: Python",
-        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Framework :: Django",
+        "Intended Audience :: Developers",
+        "Development Status :: 3 - Alpha",
+        "License :: OSI Approved :: GNU General Public License (GPL)",
         ],
-      keywords='',
-      author='',
+      keywords='django chat ajax',
+      author='Vince E. Antignano (@qubird)',
       author_email='',
-      url='',
-      license='',
+      url='https://github.com/qubird/django-chatrooms',
+      license='GPL',
       packages=find_packages(exclude=['ez_setup']),
       namespace_packages=[],
       include_package_data=True,

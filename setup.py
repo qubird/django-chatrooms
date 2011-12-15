@@ -3,11 +3,10 @@ import os
 
 version = '0.1'
 
-setup(name='chatrooms',
-      version=version,
+setup(name='django-chatrooms',
+      version=__import__('chatrooms').__version__,
       description="A django app providing reverse-ajax chat rooms",
-      long_description=open("README.txt").read() + "\n" +
-                       open(os.path.join("docs", "HISTORY.txt")).read(),
+      long_description=open("README.rst").read(),
       classifiers=[
         "Programming Language :: Python",
         "Framework :: Django",
@@ -21,8 +20,8 @@ setup(name='chatrooms',
       url='https://github.com/qubird/django-chatrooms',
       license='GPL',
       packages=find_packages(exclude=['ez_setup']),
-      namespace_packages=[],
       include_package_data=True,
+      namespace_packages=[],
       zip_safe=False,
       install_requires=[
           'setuptools',

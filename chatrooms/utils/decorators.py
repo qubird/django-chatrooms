@@ -53,3 +53,25 @@ def ajax_login_required(view_func):
         else:
             return login_required(view_func)(request, *args, **kwargs)
     return _wrapped_view
+
+
+def signals_new_message_at_end(func):
+    """Decorator for MessageHandler.handle_received_message method
+    """
+
+    @wraps(func, assigned=available_attrs(func))
+    def _wrapper(self, sender, room_id, user, message, date, **kwargs):
+        f = func(self, sender, room_id, user, message, date, **kwargs)
+        sender.signal_new_message_event(room_id)
+        return f
+    return _wrapper
+
+
+def waits_for_new_message_at_start(func):
+    """Decorator for MessageHandler.retrieve_messages method
+    """
+    @wraps(func, assigned=available_attrs(func))
+    def _wrapper(self, chatobj, room_id, *args, **kwargs):
+        chatobj.wait_for_new_message(room_id)
+        return func(self, chatobj, room_id, *args, **kwargs)
+    return _wrapper

@@ -52,11 +52,17 @@ class ChatView(object):
         self.new_message_events[room_id].set()
         self.new_message_events[room_id].clear()
 
+    def wait_for_new_message(self, room_id, timeout=TIMEOUT):
+        self.new_message_events[room_id].wait(timeout)
+
     def get_messages_queue(self, room_id):
         return self.messages[room_id]
 
     def get_next_message_id(self, room_id):
         return self.counters[room_id].next()
+
+    def get_connected_users(self, room_id):
+        return self.connected_users[room_id]
 
     @method_decorator(ajax_login_required)
     @method_decorator(ajax_user_passes_test_or_403(check_user_passes_test))
@@ -74,8 +80,6 @@ class ChatView(object):
             "Expected a GET request with 'room_id' and 'latest_message_id' "
             "parameters")
         room = get_object_or_404(Room, id=room_id)
-        # wait for new messages
-        self.new_message_events[room.id].wait(TIMEOUT)
 
         handler = MessageHandlerFactory()
         messages = handler.retrieve_messages(self, room_id)

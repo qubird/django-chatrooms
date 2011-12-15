@@ -1,69 +1,14 @@
-body{
+#chatContent{
     background-color: #EDF0F0;
     font-family: Helvetica, Arial, "MS Trebuchet", sans-serif;
 }
 
-#nav-menu li {
-    list-style-type: none;
-    display: inline;
-    margin-right: 20px;
-}
-
-.button {
-   border-top: 1px solid #737373;
-   background: #abb3b8;
-   background: -webkit-gradient(linear, left top, left bottom, from(#000000), to(#abb3b8));
-   background: -webkit-linear-gradient(top, #000000, #abb3b8);
-   background: -moz-linear-gradient(top, #000000, #abb3b8);
-   background: -ms-linear-gradient(top, #000000, #abb3b8);
-   background: -o-linear-gradient(top, #000000, #abb3b8);
-   padding: 4px 8px;
-   -webkit-border-radius: 8px;
-   -moz-border-radius: 8px;
-   border-radius: 8px;
-   -webkit-box-shadow: rgba(0,0,0,1) 0 1px 0;
-   -moz-box-shadow: rgba(0,0,0,1) 0 1px 0;
-   box-shadow: rgba(0,0,0,1) 0 1px 0;
-   text-shadow: rgba(0,0,0,.4) 0 1px 0;
-   color: white;
-   font-size: 14px;
-   font-family: 'Lucida Grande', Helvetica, Arial, Sans-Serif;
-   text-decoration: none;
-   vertical-align: middle;
-}
-.button:hover {
-   border-top-color: #ffffff;
-   background: #ffffff;
-   color: #000000;
-}
-.button:active {
-   border-top-color: #93979c;
-   background: #93979c;
-}
-
-#header {
-    position: static;
-    left: 0px;
-    top: 0px;
-    background-color: #EBECE4;
-    text-align: center;
-    font-family: Helvetica, Arial, "MS Trebuchet", sans-serif;
-    height: 40px;
-}
-
-#video {
-    float: left;
-    display: inline;
-    position: relative;
-    box-shadow: inset 2px 2px 1px #888888;
-}
-
 #chat {
-    width: 35%;
+    width: 80%;
     display: inline;
     float: left;
     background-color: #C9C9C9;
-    box-shadow: inset 2px 2px 1px #888888;
+    border-style: outset;
 }
 
 #chatText {
@@ -88,7 +33,7 @@ body{
     outline-style:none;
     font-family: Helvetica, Arial, "MS Trebuchet", sans-serif;
     color: #5a5a5a;
-    -webkit-box-shadow: inset 2px 2px 1px #888888; /* Safari and Chrome */
+    -webkit-box-shadow: inset 2px 2px 1px #888888; 
     box-shadow: inset 2px 2px 1px #888888;
 }
 
@@ -117,7 +62,7 @@ body{
 
 
 .chatMessage {
-    background-color: #999999;
+    background-color: #C9C9C9;
     color: white;
     display: block;
     margin-left: 2px;
@@ -133,10 +78,10 @@ body{
 #connectedUsers{
     overflow: auto;
     position: relative;
-    height: 70%;
+    width: 15%;
     list-style-type: none;
     float: left;
-    box-shadow: 1px 1px 3px #888888;
+    border-style: outset;
 }
 
 #connectedUsersList{

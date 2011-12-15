@@ -116,7 +116,7 @@ class ChatView(object):
     @method_decorator(ajax_login_required)
     @method_decorator(ajax_user_passes_test_or_403(check_user_passes_test))
     def send_message(self, request):
-        """Gets room_id and message as request parameters and sends a
+        """Gets room_id and message from request and sends a
         chat_message_received signal
 
         """

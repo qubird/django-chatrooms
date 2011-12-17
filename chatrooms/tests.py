@@ -1,14 +1,15 @@
 import json
+import urlparse
 
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.test.client import Client
 
-from django.contrib.auth.models import User
-
 from chatrooms.models import Room
+from chatrooms.utils.auth import get_login_url
 
 
-class SimpleTest(TestCase):
+class ChatroomsTest(TestCase):
     def create_user(self):
         # creates a user
         username = 'john'
@@ -19,6 +20,53 @@ class SimpleTest(TestCase):
                                         email=email)
         user.save()
         return username, password
+
+    def test_anonymous_access(self):
+        anon_room = Room(
+                        allow_anonymous_access=True,
+                        name="Anonymous Room",
+                        slug="anonymous-room")
+        login_req_room = Room(
+                        allow_anonymous_access=False,
+                        name="Login required room",
+                        slug="login-required-room")
+        anon_room.save()
+        login_req_room.save()
+
+        client = Client()
+
+        response = client.get(login_req_room.get_absolute_url())
+        # a login view may not have been implemented, so assertRedirects fails
+        self.assertEquals(response.status_code, 302)
+        import pdb; pdb.set_trace()
+        url = response['Location']
+        expected_url = get_login_url(login_req_room.get_absolute_url())
+        e_scheme, e_netloc, e_path, e_query, e_fragment = urlparse.urlsplit(
+                                                                expected_url)
+        if not (e_scheme or e_netloc):
+            expected_url = urlparse.urlunsplit(('http', 'testserver', e_path,
+                e_query, e_fragment))
+        self.assertEquals(url, expected_url)
+
+        response = client.get(
+            anon_room.get_absolute_url(),
+            follow=True)
+
+        # assert redirect
+        self.assertRedirects(
+            response,
+            'http://testserver/chat/setguestname/?room_slug=anonymous-room')
+
+        # post guestname
+        guestname_posted = client.post(
+            response.redirect_chain[0][0],
+            {'guest_name': 'guest',
+             'room_slug': 'anonymous-room'},
+            follow=True)
+        self.assertRedirects(
+            guestname_posted,
+            anon_room.get_absolute_url()
+        )
 
     def test_get_messages(self, *args, **kwargs):
         username, password = self.create_user()

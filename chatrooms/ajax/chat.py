@@ -10,7 +10,6 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.http import (HttpResponse,
                         HttpResponseBadRequest)
-from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 
 from gevent.event import Event
@@ -19,7 +18,7 @@ from ..models import Room
 from ..signals import chat_message_received
 from ..utils.auth import check_user_passes_test
 from ..utils.decorators import ajax_user_passes_test_or_403
-from ..utils.decorators import ajax_login_required
+from ..utils.decorators import ajax_room_login_required
 from ..utils.handlers import MessageHandlerFactory
 
 
@@ -59,6 +58,17 @@ class ChatView(object):
             self.connected_users[room.id] = {}
             self.new_connected_user_event[room.id] = Event()
 
+    def get_username(self, request):
+        """Returns username if user is authenticated, guest name otherwise """
+        if request.user.is_authenticated():
+            username = request.user.username
+        else:
+            guestname = request.session.get('guest_name')
+            username = '(guest) %s' % guestname
+        return username
+
+
+
     def signal_new_message_event(self, room_id):
         """Signals new_message_event given a room_id """
         self.new_message_events[room_id].set()
@@ -80,7 +90,7 @@ class ChatView(object):
         """Returns the connected users given a room_id"""
         return self.connected_users[room_id]
 
-    @method_decorator(ajax_login_required)
+    @method_decorator(ajax_room_login_required)
     @method_decorator(ajax_user_passes_test_or_403(check_user_passes_test))
     def get_messages(self, request):
         """Handles ajax requests for messages
@@ -97,14 +107,13 @@ class ChatView(object):
             "Parameters missing or bad parameters. "
             "Expected a GET request with 'room_id' and 'latest_message_id' "
             "parameters")
-        get_object_or_404(Room, id=room_id)
 
         handler = MessageHandlerFactory()
         messages = handler.retrieve_messages(self, room_id)
 
         to_jsonify = [
             {"message_id": msg_id,
-             "username": message.user.username,
+             "username": message.username,
              "date": message.date.strftime(TIME_FORMAT),
              "content": message.content}
             for msg_id, message in messages
@@ -113,7 +122,7 @@ class ChatView(object):
         return HttpResponse(json.dumps(to_jsonify),
                             mimetype="application/json")
 
-    @method_decorator(ajax_login_required)
+    @method_decorator(ajax_room_login_required)
     @method_decorator(ajax_user_passes_test_or_403(check_user_passes_test))
     def send_message(self, request):
         """Gets room_id and message from request and sends a
@@ -128,20 +137,21 @@ class ChatView(object):
             return HttpResponseBadRequest(
             "Parameters missing or bad parameters"
             "Expected a POST request with 'room_id' and 'message' parameters")
-        get_object_or_404(Room, id=room_id)
         user = request.user
-        foo, response = chat_message_received.send(
-                            sender=self,
-                            room_id=room_id,
-                            user=user,
-                            message=message,
-                            date=date)[0]
+        username = self.get_username(request)
+        chat_message_received.send(
+            sender=self,
+            room_id=room_id,
+            username=username,
+            message=message,
+            date=date,
+            user=user if user.is_authenticated() else None)
 
         return HttpResponse(json.dumps({
                  'timestamp': date.strftime(TIME_FORMAT), }
         ))
 
-    @method_decorator(ajax_login_required)
+    @method_decorator(ajax_room_login_required)
     @method_decorator(ajax_user_passes_test_or_403(check_user_passes_test))
     def notify_users_list(self, request):
         """Updates user time into connected users dictionary """
@@ -151,16 +161,14 @@ class ChatView(object):
             return HttpResponseBadRequest(
             "Parameters missing or bad parameters"
             "Expected a POST request with 'room_id'")
-
-        user = request.user
-        get_object_or_404(Room, id=room_id)
+        username = self.get_username(request)
         date = datetime.today()
-        self.connected_users[room_id].update({user.username: date})
+        self.connected_users[room_id].update({username: date})
         self.new_connected_user_event[room_id].set()
         self.new_connected_user_event[room_id].clear()
         return HttpResponse('Connected')
 
-    @method_decorator(ajax_login_required)
+    @method_decorator(ajax_room_login_required)
     @method_decorator(ajax_user_passes_test_or_403(check_user_passes_test))
     def get_users_list(self, request):
         """Dumps the list of connected users """
@@ -171,11 +179,9 @@ class ChatView(object):
             return HttpResponseBadRequest(
             "Parameters missing or bad parameters"
             "Expected a POST request with 'room_id'")
-
-        get_object_or_404(Room, id=room_id)
-        user = request.user
+        username = self.get_username(request)
         self.connected_users[room_id].update({
-                                user.username: datetime.today()
+                                username: datetime.today()
                             })
         self.new_connected_user_event[room_id].wait(REFRESH_TIME)
 
@@ -194,7 +200,7 @@ class ChatView(object):
         return HttpResponse(json.dumps(json_response),
                             mimetype='application/json')
 
-    @method_decorator(ajax_login_required)
+    @method_decorator(ajax_room_login_required)
     @method_decorator(ajax_user_passes_test_or_403(check_user_passes_test))
     def get_latest_message_id(self, request):
         """Dumps the id of the latest message sent """

@@ -5,7 +5,7 @@ from django.dispatch import Signal
 chat_message_received = Signal(
     providing_args=[
         "room_id",
-        "user",
+        "username",
         "message",
         "date",
 ])

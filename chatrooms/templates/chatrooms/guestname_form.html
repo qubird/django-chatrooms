@@ -1,0 +1,8 @@
+{% extends "chatrooms/base.html" %}
+{% block content %}
+    <div>Choose a guest name or <a href="{{ login_url }}">login</a><div>
+    <form action="" method="post">{% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Submit" />
+    </form>
+{% endblock content %}

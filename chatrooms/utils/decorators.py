@@ -2,11 +2,16 @@
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseForbidden
-from django.shortcuts import render_to_response
+from django.core.urlresolvers import reverse
+from django.http import (HttpResponse,
+                         HttpResponseForbidden,
+                         HttpResponseRedirect)
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils.decorators import available_attrs
 from django.utils.functional import wraps
+
+from ..models import Room
 
 
 def ajax_user_passes_test_or_403(test_func, message="Access denied"):
@@ -17,8 +22,8 @@ def ajax_user_passes_test_or_403(test_func, message="Access denied"):
     else renders a 403.html template.
     The test should be a callable which takes the user object and
     returns True if the user passes.
-    """
 
+    """
     def decorator(view_func):
         @wraps(view_func, assigned=available_attrs(view_func))
         def _wrapped_view(request, *args, **kwargs):
@@ -35,13 +40,18 @@ def ajax_user_passes_test_or_403(test_func, message="Access denied"):
     return decorator
 
 
-def ajax_login_required(view_func):
+def ajax_room_login_required(view_func):
     """Handle non-authenticated users differently if it is an AJAX request
-    Borrowed from django-hilbert
-    """
+    If the ``allow_anonymous_access`` is set, allows access to anonymous
 
+    """
     @wraps(view_func, assigned=available_attrs(view_func))
     def _wrapped_view(request, *args, **kwargs):
+        room_id = request.REQUEST.get('room_id')
+        if room_id:
+            room = get_object_or_404(Room, pk=room_id)
+            if room.allow_anonymous_access:
+                return view_func(request, *args, **kwargs)
         if request.is_ajax():
             if request.user.is_authenticated():
                 return view_func(request, *args, **kwargs)
@@ -55,13 +65,34 @@ def ajax_login_required(view_func):
     return _wrapped_view
 
 
+def room_check_access(view_func):
+    """Decorator for RoomView detailed view.
+    Deny access to unauthenticated users if room doesn't allow anon access
+    Show form to set a guest user if the rooms allows access to anon users
+    but a guest_name has not yet been set for this session
+
+    """
+    @wraps(view_func, assigned=available_attrs(view_func))
+    def _wrapped_view(request, *args, **kwargs):
+        room_slug = kwargs.get('slug')
+        room = get_object_or_404(Room, slug=room_slug)
+        if request.user.is_authenticated():
+            return view_func(request, *args, **kwargs)
+        elif room.allow_anonymous_access:
+            if not request.session.get('guest_name'):
+                return HttpResponseRedirect(
+                    reverse('set_guestname') + '?room_slug=%s' % room_slug)
+            return view_func(request, *args, **kwargs)
+        return login_required(view_func)(request, *args, **kwargs)
+    return _wrapped_view
+
+
 def signals_new_message_at_end(func):
     """Decorator for MessageHandler.handle_received_message method
     """
-
     @wraps(func, assigned=available_attrs(func))
-    def _wrapper(self, sender, room_id, user, message, date, **kwargs):
-        f = func(self, sender, room_id, user, message, date, **kwargs)
+    def _wrapper(self, sender, room_id, username, message, date, **kwargs):
+        f = func(self, sender, room_id, username, message, date, **kwargs)
         sender.signal_new_message_event(room_id)
         return f
     return _wrapper

@@ -1,18 +1,22 @@
 #encoding=utf8
 
-from django.conf.urls.defaults import *
-from django.contrib.auth.decorators import login_required
+from django.conf.urls.defaults import url, patterns
 
 from . import views
+from .utils.decorators import room_check_access
+
 
 urlpatterns = patterns('chatrooms',
     # room views
     url(r'^rooms/$',
-        login_required(views.RoomsListView.as_view()),
+        views.RoomsListView.as_view(),
         name="rooms_list"),
     url(r'^room/(?P<slug>[-\w\d]+)/$',
-        login_required(views.RoomView.as_view()),
+        room_check_access(views.RoomView.as_view()),
         name="room_view"),
+    url(r'^setguestname/$',
+        views.GuestNameView.as_view(),
+        name="set_guestname"),
 
     # ajax requests
     url(r'^get_messages/', 'ajax.chat.get_messages'),

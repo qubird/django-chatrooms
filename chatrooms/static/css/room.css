@@ -18,13 +18,13 @@
     width: 100%;
 }
 
-#chatInput input{ 
+#chatInput input{
+    float: left;
 }
 
 #chatSendText {
     border:none;
     position: relative;
-    float: left;
     height: 32px;
     width: 80%;
     font-size: 18px;
@@ -63,8 +63,8 @@
 
 .chatMessage {
     background-color: #C9C9C9;
-    color: white;
-    display: block;
+    color: black;
+    overflow: auto;
     margin-left: 2px;
 }
 
@@ -101,5 +101,6 @@
 
 .messageContent{
     font-style: oblique;
-    font-size: 12px;
+    font-size: 14px;
+
 }

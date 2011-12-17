@@ -32,7 +32,7 @@ class MessageHandler(object):
 
     @signals_new_message_at_end
     def handle_received_message(self,
-        sender, room_id, user, message, date, **kwargs):
+        sender, room_id, username, message, date, **kwargs):
         """
         Default handler for the message_received signal.
         1 - Saves an instance of message to db
@@ -42,12 +42,18 @@ class MessageHandler(object):
         4 - Returns the created message
 
         """
-        # 1
         room = Room.objects.get(id=room_id)
-        new_message = Message(user=user,
-                              room=room,
-                              date=date,
-                              content=message)
+        fields = {
+            'room': room,
+            'date': date,
+            'content': message,
+            'username': username,
+        }
+        user = kwargs.get('user')
+        if user:
+            fields['user'] = user
+        # 1
+        new_message = Message(**fields)
         new_message.save()
 
         # 2

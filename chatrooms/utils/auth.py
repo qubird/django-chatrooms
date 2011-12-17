@@ -1,9 +1,27 @@
 #encoding=utf8
+import urlparse
+
 from django.conf import settings
-from django.core.exceptions import (ObjectDoesNotExist,
-                                    ImproperlyConfigured,
-)
+from django.contrib.auth import REDIRECT_FIELD_NAME
+from django.core.exceptions import ImproperlyConfigured
+from django.http import QueryDict
+
 from django_load.core import load_object
+
+
+def get_login_url(next, login_url=None,
+                      redirect_field_name=REDIRECT_FIELD_NAME):
+    """Returns the full login_url with next parameter set """
+    if not login_url:
+        login_url = settings.LOGIN_URL
+
+    login_url_parts = list(urlparse.urlparse(login_url))
+    if redirect_field_name:
+        querystring = QueryDict(login_url_parts[4], mutable=True)
+        querystring[redirect_field_name] = next
+        login_url_parts[4] = querystring.urlencode(safe='/')
+
+    return urlparse.urlunparse(login_url_parts)
 
 
 def get_test_user_function():

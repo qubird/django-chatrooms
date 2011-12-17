@@ -32,7 +32,7 @@ class SimpleTest(TestCase):
         room.save()
 
         # message queue empty: check last_message_id
-        response = client.get('/chat/get_last_msg_id/?room_id=%d' % room.id)
+        response = client.get('/chat/get_latest_msg_id/?room_id=%d' % room.id)
         json_response = json.loads(response.content)
         last_msg_id = json_response['id']
         self.assertEquals(last_msg_id, -1)
@@ -47,9 +47,11 @@ class SimpleTest(TestCase):
         timestamp = json_response['timestamp']
 
         # gets list of messages
-        response = client.get('/chat/get_messages/?room_id=%d&latest_id=%d' % (
-                                                        room.id, last_msg_id),
+        response = client.get(
+            '/chat/get_messages/?room_id=%d&latest_message_id=%d' % (
+                                                room.id, last_msg_id),
                 HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEquals(response.status_code, 200)
         json_response = json.loads(response.content)
 
         expected_json = [{u'message_id': 0,
@@ -59,7 +61,7 @@ class SimpleTest(TestCase):
         self.assertEquals(expected_json, json_response)
 
         # check last_message_id
-        response = client.get('/chat/get_last_msg_id/?room_id=%d' % room.id)
+        response = client.get('/chat/get_latest_msg_id/?room_id=%d' % room.id)
         json_response = json.loads(response.content)
         last_msg_id = json_response['id']
         self.assertEquals(last_msg_id, 0)

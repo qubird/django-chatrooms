@@ -157,7 +157,7 @@ $(function(){
                             userdate.minute,
                             userdate.second);
                     userJsDate = userJsDate.valueOf();
-                    if ( date - userJsDate < (data.refresh * 2) * 1000){
+                    if (date - userJsDate < (data.refresh * 2) * 1000){
                         if (Context.username == users[i].username){
                             $('#connectedUsersList').append(
                                 '<li>You</li>');    
@@ -174,12 +174,15 @@ $(function(){
     $('#chatSendButton').bind("click", chatSendAction);
 
     $('#chatSendText').keydown(function(e){
-        if(e.keyCode == '13'){
+        if (e.keyCode == '13' && !e.shiftKey){
             $('#chatSendButton').addClass("pressed");
+        }
+        if (e.keyCode == '13' && e.shiftKey){
+            $('#chatSendText').val($('#chatSendText').val() + '\r\n');
         }
     });
     $('#chatSendText').keyup(function(e){
-        if(e.keyCode == '13'){
+        if (e.keyCode == '13' && !e.shiftKey){
             $('#chatSendButton').removeClass("pressed");
             $('#chatSendButton').click();
         }

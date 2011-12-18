@@ -68,8 +68,9 @@ def ajax_room_login_required(view_func):
 def room_check_access(view_func):
     """Decorator for RoomView detailed view.
     Deny access to unauthenticated users if room doesn't allow anon access
-    Show form to set a guest user if the rooms allows access to anon users
-    but a guest_name has not yet been set for this session
+    Shows a form to set a guest user name if the room allows access
+    to not authenticated users and the guest_name has not yet been set
+    for the current session
 
     """
     @wraps(view_func, assigned=available_attrs(view_func))
@@ -81,6 +82,7 @@ def room_check_access(view_func):
         elif room.allow_anonymous_access:
             if not request.session.get('guest_name'):
                 return HttpResponseRedirect(
+                    # TODO: use django.http.QueryDict
                     reverse('set_guestname') + '?room_slug=%s' % room_slug)
             return view_func(request, *args, **kwargs)
         return login_required(view_func)(request, *args, **kwargs)

@@ -30,6 +30,19 @@ if settings.DEBUG:
 
 
 class ChatView(object):
+    """Returns a singleton of ChatView
+    Methods dispatch all the ajax requests from chat
+
+    """
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            self = super(ChatView, cls).__new__(cls, *args, **kwargs)
+            ChatView.__init__(self, *args, **kwargs)
+            cls._instance = self
+        return cls._instance
+
     def __init__(self):
         """
         Defines dictionary attibutes sorted by room_id
@@ -226,14 +239,6 @@ class ChatView(object):
                 self.connected_users[room_id].pop(usr)
 
 
-chat = ChatView()
-send_message = chat.send_message
-get_messages = chat.get_messages
-get_users_list = chat.get_users_list
-notify_users_list = chat.notify_users_list
-get_latest_message_id = chat.get_latest_message_id
-
-
 @receiver(post_save, sender=Room)
 def create_events_for_new_room(sender, **kwargs):
     """Creates an entry in Chat dictionary attributes
@@ -243,8 +248,8 @@ def create_events_for_new_room(sender, **kwargs):
     if kwargs.get('created'):
         instance = kwargs.get('instance')
         room_id = instance.id
-        chat.new_message_events[room_id] = Event()
-        chat.messages[room_id] = deque(maxlen=50)
-        chat.counters[room_id] = itertools.count()
-        chat.connected_users[room_id] = {}
-        chat.new_connected_user_event[room_id] = Event()
+        ChatView().new_message_events[room_id] = Event()
+        ChatView().messages[room_id] = deque(maxlen=50)
+        ChatView().counters[room_id] = itertools.count()
+        ChatView().connected_users[room_id] = {}
+        ChatView().new_connected_user_event[room_id] = Event()

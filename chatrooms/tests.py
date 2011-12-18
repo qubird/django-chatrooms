@@ -38,7 +38,6 @@ class ChatroomsTest(TestCase):
         response = client.get(login_req_room.get_absolute_url())
         # a login view may not have been implemented, so assertRedirects fails
         self.assertEquals(response.status_code, 302)
-        import pdb; pdb.set_trace()
         url = response['Location']
         expected_url = get_login_url(login_req_room.get_absolute_url())
         e_scheme, e_netloc, e_path, e_query, e_fragment = urlparse.urlsplit(

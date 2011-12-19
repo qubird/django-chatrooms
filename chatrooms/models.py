@@ -9,6 +9,7 @@ from polymorphic import PolymorphicModel
 class Room(PolymorphicModel):
     name = models.CharField(max_length=64, unique=True)
     slug = models.SlugField()
+    description = models.TextField()
     subscribers = models.ManyToManyField(User, blank=True)
     allow_anonymous_access = models.NullBooleanField()
     private = models.NullBooleanField()

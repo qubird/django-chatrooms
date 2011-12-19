@@ -80,8 +80,6 @@ class ChatView(object):
             username = '(guest) %s' % guestname
         return username
 
-
-
     def signal_new_message_event(self, room_id):
         """Signals new_message_event given a room_id """
         self.new_message_events[room_id].set()

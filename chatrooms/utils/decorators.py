@@ -16,11 +16,11 @@ from ..models import Room
 
 def ajax_user_passes_test_or_403(test_func, message="Access denied"):
     """
-    Decorator for views that checks the user passes the given test,
-    raising 403 if user does not pass test.
+    Decorator for views that checks if the user passes the given test_func,
+    raising 403 if it doesn't.
     If the request is ajax returns a 403 response with a message,
     else renders a 403.html template.
-    The test should be a callable which takes the user object and
+    The test should be a callable that takes a user object and
     returns True if the user passes.
 
     """
@@ -32,6 +32,7 @@ def ajax_user_passes_test_or_403(test_func, message="Access denied"):
             # returns an HttpResponseForbidden if request is ajax
             if request.is_ajax:
                 return HttpResponseForbidden(message)
+            # else returns the 403 page
             ctx = RequestContext(request)
             resp = render_to_response('403.html', context_instance=ctx)
             resp.status_code = 403

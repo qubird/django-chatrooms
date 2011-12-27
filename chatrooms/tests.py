@@ -127,7 +127,7 @@ class ChatroomsTest(TestCase):
         self.assertEquals(response.status_code, 200)
         json_response = json.loads(response.content)
 
-        expected_json = [{u'message_id': 0,
+        expected_json = [{u'message_id': 1,
                           u'username': u'john',
                           u'date': timestamp,
                           u'content': u'ABCD', }]
@@ -137,4 +137,4 @@ class ChatroomsTest(TestCase):
         response = client.get('/chat/get_latest_msg_id/?room_id=%d' % room.id)
         json_response = json.loads(response.content)
         last_msg_id = json_response['id']
-        self.assertEquals(last_msg_id, 0)
+        self.assertEquals(last_msg_id, 1)

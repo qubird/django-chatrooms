@@ -68,7 +68,7 @@ class ChatView(object):
         for room in rooms:
             self.new_message_events[room.id] = Event()
             self.messages[room.id] = deque(maxlen=50)
-            self.counters[room.id] = itertools.count()
+            self.counters[room.id] = itertools.count(1)
             self.connected_users[room.id] = {}
             self.new_connected_user_event[room.id] = Event()
 
@@ -247,6 +247,6 @@ def create_events_for_new_room(sender, **kwargs):
         chatview = ChatView()
         chatview.new_message_events[room_id] = Event()
         chatview.messages[room_id] = deque(maxlen=50)
-        chatview.counters[room_id] = itertools.count()
+        chatview.counters[room_id] = itertools.count(1)
         chatview.connected_users[room_id] = {}
         chatview.new_connected_user_event[room_id] = Event()

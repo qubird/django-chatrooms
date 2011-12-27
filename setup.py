@@ -1,8 +1,6 @@
 from setuptools import setup, find_packages
 import os
 
-version = '0.1'
-
 setup(name='django-chatrooms',
       version=__import__('chatrooms').__version__,
       description="A django app providing reverse-ajax chat rooms",

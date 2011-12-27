@@ -211,7 +211,6 @@ Acknowledgements
 
 
 Further improvements
-****
+********************
 
-- Users list methods could be improved to work properly in multi-process environments,
-as it's been done with message handlers.
+- Users list methods could be improved to work properly in multi-process environments, as it's been done with message handlers.

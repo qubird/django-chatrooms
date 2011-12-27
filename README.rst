@@ -58,10 +58,19 @@ Important Note
 
 django-chatrooms works properly in a multithreading environment (like `gevent patched wsgi server <https://github.com/gabrielfalcao/djangogevent>`_, or `uwsgi server with gevent plugin <http://projects.unbit.it/uwsgi/wiki/Gevent>`_).
 
-The app does not work properly with servers that pre-fork the application before running, like  `gunicorn <http://gunicorn.org>`_ does.
-That means you cannot run the application with *gunicorn* (setting ``--worker-class=gevent``) unless you use no more than 1 worker (setting ``--workers=1``).
-To run the app in a multiprocess environment, you need some workaround implementing some sort of interprocess communication (ex. using a Message Queueing service like RabbitMQ).
-See the `Message Handlers`_ section to know how.
+To use the app with servers that pre-fork the application before running, like 
+`gunicorn <http://gunicorn.org>`_ does, you need to use some sort of interprocess
+communication.
+
+``chatrooms.utils.redis_handlers`` module contains the ``RedisMessageHandler`` class,
+which can be set as ``settings.CHATROOMS_MESSAGE_HANDLERS`` to use the application
+in a gunicorn-like environment.
+The module needs a `redis <http://redis.io>`_ instance installed and running to work.
+
+Also a ``chatrooms.utils.celery_handlers.CeleryMessageHandler`` class has been included.
+It can be used as ``settings.CHATROOMS_MESSAGE_HANDLERS`` as well, but needs `celery <http://www.celeryproject.org>`_ to be installed.
+
+See the `Message Handlers`_ section to know how to implement your own handlers.
 
 
 Using the app
@@ -143,10 +152,16 @@ Message Handlers
     :date: the timestamp of the sent message
     :user: request.user if user is authenticated, else ``None``
 
-- ``retrieve_messages(chatobj, room_id)``
+- ``retrieve_messages(chatobj, room_id, latest_msg_id)``
 
     :chatobj: the ChatView instance
     :room_id: the id of the room whose messages are requested
+    :latest_msg_id: the id of the latest message sent to the room
+
+- ``get_latest_message_id(chatobj, room_id)``
+
+    :chatobj: the ChatView instance
+    :room_id: the id of the room whose latest message id is requested
 
 ``handle_received_message`` method is designed to perform operations
 with the received message such that ``retrieve_messages`` is able to
@@ -159,6 +174,10 @@ retrieve it afterwards.
 - ``content``
 
 and ``message_id`` is a unique progressive identifier.
+
+``get_latest_message_id`` must give back the id of the latest message received,
+consistently to the ways messages are stored and retrieved.
+
 
 To implement your handlers you need to create a class extending ``chatrooms.utils.handlers.MessageHandler``, say ``my.app.MyHandlerClass``,
 override the aforementioned methods, and add to your settings::
@@ -189,3 +208,10 @@ Acknowledgements
 ****************
 
 `Denis Bilenko \'s webchat example <https://bitbucket.org/denis/gevent/src/tip/examples/webchat/>`_ has been a great starting point for the design of this app.
+
+
+Further improvements
+****
+
+- Users list methods could be improved to work properly in multi-process environments,
+as it's been done with message handlers.

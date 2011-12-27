@@ -68,7 +68,7 @@ class MessageHandler(object):
         return new_message
 
     @waits_for_new_message_at_start
-    def retrieve_messages(self, chatobj, room_id, *args, **kwargs):
+    def retrieve_messages(self, chatobj, room_id, latest_msg_id, **kwargs):
         """
         Returns a list of tuples like:
         [(message_id, message_obj), ...]
@@ -86,6 +86,14 @@ class MessageHandler(object):
         # 2
         return chatobj.get_messages_queue(room_id)
 
+    def get_latest_message_id(self, chatobj, room_id):
+        """Returns id of the latest retrieved message """
+        latest_msg_id = -1
+        msgs_queue = chatobj.messages[room_id]
+        if msgs_queue:
+            latest_msg_id = msgs_queue[-1][0]
+        return latest_msg_id
+
 
 class MessageHandlerFactory(object):
     """
@@ -101,10 +109,10 @@ class MessageHandlerFactory(object):
         if hasattr(settings, 'CHATROOMS_HANDLERS_CLASS'):
             try:
                 klass = load_object(settings.CHATROOMS_HANDLERS_CLASS)
-            except (ImportError, TypeError):
+            except (ImportError, TypeError) as exc:
                 raise ImproperlyConfigured(
-                    "The class set as settings.CHATROOMS_HANDLERS_CLASS "
-                    "does not exists"
+                    "An error occurred while loading the "
+                    "CHATROOMS_HANDLERS_CLASS: %s" % exc
                 )
 
         if not cls._instance:

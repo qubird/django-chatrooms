@@ -58,6 +58,7 @@ class ChatView(object):
           implement long polling
 
         """
+        self.handler = MessageHandlerFactory()
         self.new_message_events = {}
         self.messages = {}
         self.counters = {}
@@ -119,8 +120,8 @@ class ChatView(object):
             "Expected a GET request with 'room_id' and 'latest_message_id' "
             "parameters")
 
-        handler = MessageHandlerFactory()
-        messages = handler.retrieve_messages(self, room_id)
+        messages = self.handler.retrieve_messages(
+                        self, room_id, latest_msg_id)
 
         to_jsonify = [
             {"message_id": msg_id,
@@ -219,10 +220,7 @@ class ChatView(object):
             room_id = int(request.GET['room_id'])
         except:
             return HttpResponseBadRequest()
-        latest_msg_id = -1
-        msgs_queue = self.messages[room_id]
-        if msgs_queue:
-            latest_msg_id = msgs_queue[-1][0]
+        latest_msg_id = self.handler.get_latest_message_id(self, room_id)
         response = {"id": latest_msg_id}
         return HttpResponse(json.dumps(response), mimetype="application/json")
 
@@ -246,8 +244,9 @@ def create_events_for_new_room(sender, **kwargs):
     if kwargs.get('created'):
         instance = kwargs.get('instance')
         room_id = instance.id
-        ChatView().new_message_events[room_id] = Event()
-        ChatView().messages[room_id] = deque(maxlen=50)
-        ChatView().counters[room_id] = itertools.count()
-        ChatView().connected_users[room_id] = {}
-        ChatView().new_connected_user_event[room_id] = Event()
+        chatview = ChatView()
+        chatview.new_message_events[room_id] = Event()
+        chatview.messages[room_id] = deque(maxlen=50)
+        chatview.counters[room_id] = itertools.count()
+        chatview.connected_users[room_id] = {}
+        chatview.new_connected_user_event[room_id] = Event()

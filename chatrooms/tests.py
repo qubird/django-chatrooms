@@ -5,21 +5,47 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.test.client import Client
 
+from chatrooms.ajax.chat import ChatView
 from chatrooms.models import Room
 from chatrooms.utils.auth import get_login_url
 
 
 class ChatroomsTest(TestCase):
-    def create_user(self):
+    def setUp(self):
         # creates a user
-        username = 'john'
-        password = 'johnpasswd'
-        email = 'john@beatles.com'
-        user = User.objects.create_user(username=username,
-                                        password=password,
-                                        email=email)
-        user.save()
-        return username, password
+        self.username = 'john'
+        self.userpwd = 'johnpasswd'
+        self.useremail = 'john@beatles.com'
+        self.user = User.objects.create_user(
+                            username=self.username,
+                            password=self.userpwd,
+                            email=self.useremail)
+        self.user.save()
+
+    def test_chatview_attributes(self):
+        """Asserts new items are added to ChatView instance
+        when a new room is created, and these items are removed
+        when a room is deleted
+
+        """
+        new_room = Room(name="New room",
+                        slug="new-room")
+        new_room.save()
+        chatview = ChatView()
+        self.assertIn(new_room.id, chatview.new_message_events)
+        self.assertIn(new_room.id, chatview.messages)
+        self.assertIn(new_room.id, chatview.connected_users)
+        self.assertIn(new_room.id, chatview.counters)
+        self.assertIn(new_room.id, chatview.new_connected_user_event)
+
+        # works without a post_delete handler: somewhere the Django models
+        #  collector gets rid of these items (awkward, not documented feat)
+        new_room.delete()
+        self.assertNotIn(new_room.id, chatview.new_message_events)
+        self.assertNotIn(new_room.id, chatview.messages)
+        self.assertNotIn(new_room.id, chatview.connected_users)
+        self.assertNotIn(new_room.id, chatview.counters)
+        self.assertNotIn(new_room.id, chatview.new_connected_user_event)
 
     def test_anonymous_access(self):
         anon_room = Room(
@@ -68,7 +94,7 @@ class ChatroomsTest(TestCase):
         )
 
     def test_get_messages(self, *args, **kwargs):
-        username, password = self.create_user()
+        username, password = self.username, self.userpwd
 
         # login user
         client = Client()

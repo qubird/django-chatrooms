@@ -1,32 +1,36 @@
 {% extends "chatrooms/base.html" %}
 {% block content %}
-	<div id="rooms-list">
-		<ul>
-		{% for room in rooms%}
-			<li><a href={{ room.get_absolute_url }}>{{ room.name }}</a></li>
-		{% endfor %}
-		</ul>
-	</div>
+    {% if rooms %}
+        <div id="rooms-list">
+            <ul>
+            {% for room in rooms%}
+                <li><a href={{ room.get_absolute_url }}>{{ room.name }}</a></li>
+            {% endfor %}
+            </ul>
+        </div>
 
-	<div class="pagination">
-        <span class="current">
-            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-        </span>
+        <div class="pagination">
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
 
-	    <span class="step-links">
-	        {% if page_obj.has_previous %}
-	            <a href="?page={{ page_obj.previous_page_number }}"><</a>
-	        {% endif %}
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}"><</a>
+                {% endif %}
 
-        	{% for page_num in page_obj.paginator.page_range %}
-        		{% if page_num != page_obj.number %}
-        			<a href="?page={{ page_num }}">{{ page_num }}</a>
-        		{% endif %}
-        	{% endfor %}
+                {% for page_num in page_obj.paginator.page_range %}
+                    {% if page_num != page_obj.number %}
+                        <a href="?page={{ page_num }}">{{ page_num }}</a>
+                    {% endif %}
+                {% endfor %}
 
-	        {% if page_obj.has_next %}
-	            <a href="?page={{ page_obj.next_page_number }}">></a>
-	        {% endif %}
-	    </span>
-	</div>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">></a>
+                {% endif %}
+            </span>
+        </div>
+    {% else %}
+        <span id="no-rooms-found">No rooms found</span>
+    {% endif %}        
 {% endblock content %}

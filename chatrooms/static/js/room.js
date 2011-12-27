@@ -117,6 +117,11 @@ $(function(){
                 $("#chatText").attr({
                     scrollTop: $("#chatText").attr("scrollHeight")});
                 window.setTimeout(chatGetMessages, 0);
+            },
+            error: function(jqXHR, textStatus, errorThrown){
+                if (textStatus === 'timeout'){
+                    window.setTimeout(chatGetMessages, 0);
+                }
             }});
     };
     var notifyConnection = function(){

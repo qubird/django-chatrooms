@@ -87,7 +87,7 @@ class MessageHandler(object):
         return chatobj.get_messages_queue(room_id)
 
     def get_latest_message_id(self, chatobj, room_id):
-        """Returns id of the latest retrieved message """
+        """Returns id of the latest message received """
         latest_msg_id = -1
         msgs_queue = chatobj.messages[room_id]
         if msgs_queue:

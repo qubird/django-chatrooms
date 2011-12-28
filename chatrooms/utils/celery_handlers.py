@@ -14,7 +14,7 @@ class CeleryMessageHandler(MessageHandler):
     for synchronization
     """
     def __init__(self):
-        """Initializes redis connections
+        """Initializes celery events and dispatchers
         """
         self.app = app_or_default()
         self.event = Event(type='chatrooms')
@@ -26,7 +26,7 @@ class CeleryMessageHandler(MessageHandler):
         sender, room_id, username, message, date, **kwargs):
         """
         1. saves the message
-        2. sends a message to the exchange
+        2. sends the event
 
         """
 
@@ -45,16 +45,12 @@ class CeleryMessageHandler(MessageHandler):
         new_message.save()
 
         # 2
-        msg_number = new_message.pk
-        messages_queue = sender.get_messages_queue(room_id)
-        messages_queue.append((msg_number, new_message))
-
         self.dispatcher.send(type='chatrooms')
 
     def retrieve_messages(self, chatobj, room_id, latest_msg_id, **kwargs):
         """
-        1. waits for a message on the queue
-        2. returns the list of latest messages
+        1. waits for "chatrooms" event
+        2. returns the messages with id greater than latest_msg_id
 
         """
         def handler(*args, **kwargs):
@@ -64,15 +60,16 @@ class CeleryMessageHandler(MessageHandler):
                     connection=self.app.broker_connection(),
                     handlers={"chatrooms": handler, })
         try:
+            # 1
             receiver.capture(limit=1, timeout=20, wakeup=True)
-        except:
+        except:  # Timeout
             pass
-
+        # 2
         messages = Message.objects.filter(room=room_id, id__gt=latest_msg_id)
         return [(msg.pk, msg) for msg in messages]
 
     def get_latest_message_id(self, chatobj, room_id):
-        """Returns id of the latest retrieved message """
+        """Returns id of the latest message received """
         latest_msg_id = Message.objects.filter(
                         room=room_id).aggregate(
                         max_id=Max('id')).get('max_id')

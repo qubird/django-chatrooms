@@ -1,6 +1,11 @@
 #encoding=utf8
 
-from django.conf.urls.defaults import url, patterns
+try:
+    from django.conf.urls.defaults import url, patterns
+#Django 1.6+
+except:
+    from django.conf.urls import url, patterns
+
 
 from . import views
 from .utils.decorators import room_check_access

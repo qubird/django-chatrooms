@@ -1,7 +1,8 @@
 {% extends "chatrooms/base.html" %}
+{% load staticfiles %}
 
 {% block extra_headers %}
-    <!-- <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}/css/room_page.css"> -->
+    <!-- <link rel="stylesheet" type="text/css" href="{% static "css/room_page.css" %}"> -->
     <script type="text/javascript">
         getContext = function(){
             return {
@@ -10,8 +11,8 @@
             }
         }
     </script>
-    <script type="text/javascript" src="{{ STATIC_URL }}/js/room.js"></script>
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/room.css">
+    <script type="text/javascript" src="{% static "js/room.js" %}"></script>
+    <link rel="stylesheet" type="text/css" href="{% static "css/room.css" %}">
 {% endblock %}
 
 

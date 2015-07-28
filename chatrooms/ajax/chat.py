@@ -8,7 +8,7 @@ from collections import deque
 from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.http import (HttpResponse,
+from ..utils.compat import (HttpResponse,
                         HttpResponseBadRequest)
 from django.utils.decorators import method_decorator
 

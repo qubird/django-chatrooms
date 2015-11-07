@@ -25,7 +25,7 @@ or get the latest revision from github::
 If you use buildout, just add ``django-chatrooms`` to your eggs part.
 
 The egg setup takes care of installing all the needed dependencies, anyway you might need to install `greenlet <http://pypi.python.org/pypi/greenlet/>`_ and `libevent <http://www.libevent.org/>`_ to let gevent work properly.
- 
+
 Once the egg is installed, add the following apps to your settings.INSTALLED_APPS::
 
     INSTALLED_APPS = (
@@ -58,7 +58,7 @@ Important Note
 
 django-chatrooms works properly in a multithreading environment (like `gevent patched wsgi server <https://github.com/gabrielfalcao/djangogevent>`_, or `uwsgi server with gevent plugin <http://projects.unbit.it/uwsgi/wiki/Gevent>`_).
 
-To use the app with servers that pre-fork the application before running, like 
+To use the app with servers that pre-fork the application before running, like
 `gunicorn <http://gunicorn.org>`_ does, you need to use some sort of interprocess
 communication.
 
@@ -207,7 +207,7 @@ If it returns ``False``, a 403 Forbidden Resource response is given, else the re
 Acknowledgements
 ****************
 
-`Denis Bilenko \'s webchat example <https://bitbucket.org/denis/gevent/src/tip/examples/webchat/>`_ has been a great starting point for the design of this app.
+`Denis Bilenko \'s webchat example <https://github.com/gevent/gevent/tree/master/examples/webchat/>`_ has been a great starting point for the design of this app.
 
 
 Further improvements
